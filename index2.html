@@ -16,14 +16,16 @@
   .tooltip { display: none; position: absolute; top: 100%; left: 0; background: #7a4d96; color: #fff; padding: 5px; border-radius: 5px; font-size: 12px; white-space: pre-line; z-index: 10; }
   .subject:hover .tooltip { display: block; }
   .locked::after { content: " 🔒"; margin-left: 8px; }
+  #stats { text-align: center; margin-top: 20px; font-size: 18px; color: #7a4d96; }
 </style>
 </head>
 <body>
 <h1>Malla Curricular Medicina (UAI)</h1>
 <div class="grid" id="curriculum"></div>
+<div id="stats"></div>
 
 <script>
-// === MATERIAS COMPLETAS (Códigos y correlativas según PDF) ===
+// === TODAS LAS MATERIAS Y CORRELATIVAS ===
 const materias = {
   1: [
     {id:'01',nombre:'Anatomía Humana I',correl:[]},
@@ -102,7 +104,11 @@ const materias = {
   ]
 };
 
-// === GENERAR COLUMNAS ===
+// Índice para buscar nombres
+const nombrePorId = {};
+Object.values(materias).flat().forEach(m => nombrePorId[m.id] = m.nombre);
+
+// Crear UI
 const grid = document.getElementById('curriculum');
 Object.entries(materias).forEach(([anio, lista]) => {
   const col = document.createElement('div');
@@ -122,29 +128,58 @@ Object.entries(materias).forEach(([anio, lista]) => {
   grid.appendChild(col);
 });
 
-// === PROGRESO Y BLOQUEOS ===
-const aprobadas = JSON.parse(localStorage.getItem('aprobadasMed')) || [];
-function actualizarEstado(){
-  document.querySelectorAll('.subject').forEach(div=>{
-    const id=div.dataset.id;
-    const correl=JSON.parse(div.dataset.correl);
-    const tip=div.querySelector('.tooltip');
-    const faltan=correl.filter(c=>!aprobadas.includes(c));
+// Stats
+const stats = document.getElementById('stats');
+
+// Progreso
+const data = JSON.parse(localStorage.getItem('progresoMed')) || {aprobadas: [], notas: {}};
+
+function actualizarEstado() {
+  document.querySelectorAll('.subject').forEach(div => {
+    const id = div.dataset.id;
+    const correl = JSON.parse(div.dataset.correl);
+    const tip = div.querySelector('.tooltip');
+    const faltan = correl.filter(c => !data.aprobadas.includes(c));
     div.classList.remove('approved','locked');
-    if(aprobadas.includes(id)){ div.classList.add('approved'); tip.textContent='Aprobada'; }
-    else if(faltan.length){ div.classList.add('locked'); tip.textContent='Faltan: '+faltan.join(', '); }
-    else { tip.textContent='Clic para marcar aprobada'; }
+    if (data.aprobadas.includes(id)) {
+      div.classList.add('approved');
+      const nota = data.notas[id] ? ` (Nota: ${data.notas[id]})` : '';
+      tip.textContent = 'Aprobada' + nota;
+    } else if (faltan.length) {
+      div.classList.add('locked');
+      const nombresFaltantes = faltan.map(f => nombrePorId[f]).join('\n');
+      tip.textContent = 'Faltan:\n' + nombresFaltantes;
+    } else {
+      tip.textContent = 'Clic para marcar aprobada';
+    }
   });
+
+  const total = Object.values(materias).flat().length;
+  const aprob = data.aprobadas.length;
+  const notas = Object.values(data.notas).map(Number).filter(n=>!isNaN(n));
+  const promedio = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(2) : '-';
+  stats.textContent = `Aprobadas: ${aprob}/${total} | Promedio: ${promedio}`;
 }
-document.addEventListener('click',e=>{
-  if(e.target.classList.contains('subject')&&!e.target.classList.contains('locked')){
-    const id=e.target.dataset.id;
-    if(aprobadas.includes(id)) aprobadas.splice(aprobadas.indexOf(id),1);
-    else aprobadas.push(id);
-    localStorage.setItem('aprobadasMed',JSON.stringify(aprobadas));
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('subject') && !e.target.classList.contains('locked')) {
+    const id = e.target.dataset.id;
+    if (data.aprobadas.includes(id)) {
+      data.aprobadas.splice(data.aprobadas.indexOf(id),1);
+      delete data.notas[id];
+    } else {
+      data.aprobadas.push(id);
+      let nota = prompt(`Ingresa la nota final para "${nombrePorId[id]}" (1-10, opcional):`, "");
+      if (nota!==null && nota.trim()!=="" && !isNaN(nota)) {
+        nota = Math.min(Math.max(parseFloat(nota),1),10);
+        data.notas[id] = nota;
+      }
+    }
+    localStorage.setItem('progresoMed',JSON.stringify(data));
     actualizarEstado();
   }
 });
+
 actualizarEstado();
 </script>
 </body>
