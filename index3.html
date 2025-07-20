@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Medicina UAI</title>
+<style>
+    body {
+        background: #FFB6C1;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        color: #fff;
+        text-align: center;
+    }
+    h1 {
+        color: #9400D3;
+        margin-bottom: 20px;
+        font-size: 2.5em;
+    }
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+    .year {
+        background: #FF1493;
+        border-radius: 20px;
+        padding: 15px;
+        width: 300px;
+        flex-shrink: 0;
+    }
+    .year h2 {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+    }
+    .subject {
+        background: #9400D3;
+        margin: 8px 0;
+        padding: 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        position: relative;
+        font-size: 0.9em;
+    }
+    .subject.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .subject.approved {
+        background: #32CD32;
+    }
+    .subject:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #000;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 5px;
+        white-space: pre-line;
+        font-size: 0.8em;
+        z-index: 10;
+    }
+    .counter {
+        margin-top: 30px;
+        background: #9400D3;
+        padding: 15px;
+        border-radius: 15px;
+        display: inline-block;
+        font-size: 1.2em;
+    }
+    button {
+        margin-top: 15px;
+        padding: 8px 15px;
+        background: #FF1493;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+    button:hover {
+        background: #9400D3;
+    }
+</style>
+</head>
+<body>
+    <h1>Medicina UAI</h1>
+    <div class="container" id="curriculum"></div>
+    <div class="counter" id="counter">Aprobadas: 0/63 | Promedio: 0.0000</div>
+    <button onclick="exportProgress()">Exportar Progreso</button>
+    <button onclick="importProgress()">Importar Progreso</button>
+
+<script>
+// --- LISTADO COMPLETO DE MATERIAS Y CORRELATIVIDADES ---
+const subjects = [
+  // 1er Año
+  {id:1, name:"ANATOMÍA HUMANA I", year:1, correlatives:[]},
+  {id:2, name:"HISTOLOGÍA-CITOLOGÍA-EMBRIOLOGÍA I", year:1, correlatives:[]},
+  {id:3, name:"INFORMÁTICA BIOMÉDICA I", year:1, correlatives:[]},
+  {id:4, name:"HUMANISMO MÉDICO Y BIOÉTICA", year:1, correlatives:[]},
+  {id:5, name:"DESTREZAS MÉDICAS EN PRIMEROS AUXILIOS", year:1, correlatives:[]},
+  {id:6, name:"ANATOMÍA HUMANA II", year:1, correlatives:[1]},
+  {id:7, name:"HISTOLOGÍA-CITOLOGÍA-EMBRIOLOGÍA II", year:1, correlatives:[2]},
+  {id:8, name:"INGLÉS I", year:1, correlatives:[]},
+  {id:9, name:"PREVENCIÓN PRIMARIA DE LA SALUD", year:1, correlatives:[]},
+  {id:10, name:"DESTREZAS MÉDICAS EN COMUNICACIÓN MÉDICO-PACIENTE", year:1, correlatives:[]},
+  {id:11, name:"INTEGRACIÓN Y ENTRENAMIENTO DE ACTIVIDADES PROFESIONALES I", year:1, correlatives:[]},
+
+  // 2do Año
+  {id:12, name:"FISIOLOGÍA Y BIOFÍSICA I", year:2, correlatives:[6,7]},
+  {id:13, name:"BIOQUÍMICA Y BIOLOGÍA MOLECULAR I", year:2, correlatives:[6,7]},
+  {id:14, name:"PRINCIPIOS BÁSICOS DE SALUD PÚBLICA", year:2, correlatives:[]},
+  {id:15, name:"INGLÉS II", year:2, correlatives:[8]},
+  {id:16, name:"DESTREZAS MÉDICAS: CUIDADOS DE ENFERMERÍA Y HABILIDADES CLÍNICAS", year:2, correlatives:[10]},
+  {id:17, name:"FISIOLOGÍA Y BIOFÍSICA II", year:2, correlatives:[12]},
+  {id:18, name:"BIOQUÍMICA Y BIOLOGÍA MOLECULAR II", year:2, correlatives:[13]},
+  {id:19, name:"MEDICINA DE ESTILO DE VIDA", year:2, correlatives:[14]},
+  {id:20, name:"INFORMÁTICA BIOMÉDICA II", year:2, correlatives:[3]},
+  {id:21, name:"DESTREZAS MÉDICAS: ACCIONES EN LA COMUNIDAD", year:2, correlatives:[16]},
+  {id:22, name:"INTEGRACIÓN Y ENTRENAMIENTO DE ACTIVIDADES PROFESIONALES II", year:2, correlatives:[11]},
+
+  // 3er Año
+  {id:23, name:"PATOLOGÍA I", year:3, correlatives:[17]},
+  {id:24, name:"FISIOPATOLOGÍA I", year:3, correlatives:[17]},
+  {id:25, name:"MICROBIOLOGÍA E INMUNOLOGÍA I", year:3, correlatives:[18]},
+  {id:26, name:"FARMACOLOGÍA I", year:3, correlatives:[18]},
+  {id:27, name:"SALUD MENTAL Y NEUROCIENCIAS I", year:3, correlatives:[]},
+  {id:28, name:"DESTREZAS MÉDICAS: INTRODUCCIÓN A LA SEMIOLOGÍA", year:3, correlatives:[21]},
+  {id:29, name:"PATOLOGÍA II", year:3, correlatives:[23]},
+  {id:30, name:"FISIOPATOLOGÍA II", year:3, correlatives:[24]},
+  {id:31, name:"MICROBIOLOGÍA E INMUNOLOGÍA II", year:3, correlatives:[25]},
+  {id:32, name:"FARMACOLOGÍA II", year:3, correlatives:[26]},
+  {id:33, name:"INTRODUCCIÓN A LA INVESTIGACIÓN BIOMÉDICA", year:3, correlatives:[]},
+  {id:34, name:"DESTREZAS MÉDICAS EN EL PRIMER NIVEL DE ATENCIÓN", year:3, correlatives:[21]},
+  {id:35, name:"INTEGRACIÓN Y ENTRENAMIENTO DE ACTIVIDADES PROFESIONALES III", year:3, correlatives:[22]},
+
+  // 4to Año
+  {id:36, name:"MEDICINA INTERNA I", year:4, correlatives:[28,29,30,31,34]},
+  {id:37, name:"MEDICINA INTERNA II", year:4, correlatives:[29,30,31,32,34,36]},
+  {id:38, name:"BÚSQUEDA E INTERPRETACIÓN DE BIBLIOGRAFÍA BIOMÉDICA", year:4, correlatives:[33]},
+  {id:39, name:"CIRUGÍA GENERAL", year:4, correlatives:[27,28,29,30]},
+  {id:40, name:"TRABAJO, AMBIENTE Y SALUD", year:4, correlatives:[]},
+  {id:41, name:"GESTIÓN EN SALUD Y SEGURIDAD DEL PACIENTE", year:4, correlatives:[]},
+  {id:42, name:"FUNDAMENTOS DE DIAGNÓSTICO POR IMÁGENES", year:4, correlatives:[]},
+  {id:43, name:"OPTATIVA I", year:4, correlatives:[]},
+  {id:44, name:"INTEGRACIÓN Y ENTRENAMIENTO DE ACTIVIDADES PROFESIONALES IV", year:4, correlatives:[35]},
+
+  // 5to Año
+  {id:45, name:"DISEÑO DE INVESTIGACIONES BIOMÉDICAS", year:5, correlatives:[38]},
+  {id:46, name:"ENFERMEDADES INFECCIOSAS", year:5, correlatives:[36,37]},
+  {id:47, name:"FARMACOLOGÍA Y TERAPÉUTICA", year:5, correlatives:[32,36,37]},
+  {id:48, name:"SALUD MENTAL Y NEUROCIENCIAS II", year:5, correlatives:[27,36,37]},
+  {id:49, name:"GINECOLOGÍA Y OBSTETRICIA", year:5, correlatives:[36,37,39]},
+  {id:50, name:"PEDIATRÍA", year:5, correlatives:[36,37]},
+  {id:51, name:"MEDICINA LEGAL Y BIOÉTICA", year:5, correlatives:[36,37]},
+  {id:52, name:"TOXICOLOGÍA", year:5, correlatives:[36,37]},
+  {id:53, name:"EMERGENTOLOGÍA", year:5, correlatives:[36,37,39]},
+  {id:54, name:"GERONTOLOGÍA", year:5, correlatives:[36,37,39]},
+  {id:55, name:"REHABILITACIÓN", year:5, correlatives:[36,37,39]},
+  {id:56, name:"ORTOPEDIA Y TRAUMATOLOGÍA", year:5, correlatives:[36,37,39]},
+  {id:57, name:"OPTATIVA II", year:5, correlatives:[]},
+  {id:58, name:"OPTATIVA III", year:5, correlatives:[]},
+  {id:59, name:"INTEGRACIÓN Y ENTRENAMIENTO DE ACTIVIDADES PROFESIONALES V", year:5, correlatives:[44]}, // especial
+
+  // 6to Año
+  {id:60, name:"PASANTÍA MÉDICA COMUNITARIA", year:6, correlatives:Array.from({length:59},(_,i)=>i+1)},
+  {id:61, name:"INTERNADO ROTATORIO OBLIGATORIO", year:6, correlatives:Array.from({length:59},(_,i)=>i+1)},
+  {id:62, name:"TRABAJO FINAL", year:6, correlatives:Array.from({length:59},(_,i)=>i+1)},
+  {id:63, name:"EXAMEN FINAL", year:6, correlatives:Array.from({length:62},(_,i)=>i+1)},
+];
+
+let progress = JSON.parse(localStorage.getItem("medicinaProgress") || "{}");
+
+function renderCurriculum(){
+    const container = document.getElementById("curriculum");
+    container.innerHTML = "";
+    for(let year=1;year<=6;year++){
+        const col = document.createElement("div");
+        col.className = "year";
+        col.innerHTML = `<h2>${year}° Año</h2>`;
+        subjects.filter(s=>s.year===year).forEach(sub=>{
+            const div = document.createElement("div");
+            div.className = "subject";
+            div.textContent = sub.name;
+            div.dataset.id = sub.id;
+            updateState(div, sub);
+            div.addEventListener("click",()=>handleClick(div, sub));
+            col.appendChild(div);
+        });
+        container.appendChild(col);
+    }
+    updateCounter();
+}
+
+function updateState(div, sub){
+    const done = progress[sub.id]?.approved;
+    const missing = sub.correlatives.filter(c=>!progress[c]?.approved);
+    div.classList.remove("approved","locked");
+    div.removeAttribute("data-tooltip");
+    if(done){
+        div.classList.add("approved");
+    } else if(missing.length){
+        div.classList.add("locked");
+        div.dataset.tooltip = "Falta aprobar:\n" + missing.map(id=>subjects.find(s=>s.id===id).name).join("\n");
+    }
+}
+
+function handleClick(div, sub){
+    const missing = sub.correlatives.filter(c=>!progress[c]?.approved);
+    if(missing.length) return; // bloqueada
+    if(!progress[sub.id]?.approved){
+        const nota = parseFloat(prompt(`Ingrese la nota para ${sub.name} (0-10):`, "0")) || 0;
+        progress[sub.id] = {approved:true, grade:nota};
+    } else {
+        delete progress[sub.id];
+    }
+    localStorage.setItem("medicinaProgress", JSON.stringify(progress));
+    renderCurriculum();
+}
+
+function updateCounter(){
+    const approved = Object.values(progress).filter(p=>p.approved);
+    const total = approved.length;
+    const avg = approved.reduce((sum,p)=>sum+p.grade,0)/(total||1);
+    document.getElementById("counter").textContent = `Aprobadas: ${total}/63 | Promedio: ${avg.toFixed(4)}`;
+}
+
+function exportProgress(){
+    prompt("Copia tu progreso:", JSON.stringify(progress));
+}
+
+function importProgress(){
+    const data = prompt("Pega tu progreso exportado:");
+    try{
+        progress = JSON.parse(data);
+        localStorage.setItem("medicinaProgress", JSON.stringify(progress));
+        renderCurriculum();
+    }catch(e){ alert("Formato inválido"); }
+}
+
+renderCurriculum();
+</script>
+</body>
+</html>
