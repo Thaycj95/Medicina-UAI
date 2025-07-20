@@ -7,14 +7,14 @@
 <style>
   body {
     font-family: 'Segoe UI', sans-serif;
-    background: #fdf6fb;
+    background: #faf4fb;
     margin: 0;
     padding: 20px;
     color: #4a2b4c;
   }
   h1 {
     text-align: center;
-    color: #b04ba0;
+    color: #b0398d;
     margin-bottom: 20px;
   }
   .grid {
@@ -30,21 +30,21 @@
     flex-wrap: wrap;
   }
   .anio {
-    background: #fff0fa;
-    border: 2px solid #e7b7e5;
+    background: #f9e1f5;
+    border: 2px solid #d39cd4;
     border-radius: 16px;
     padding: 15px;
-    width: 240px;
+    width: 260px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
   .anio h2 {
     text-align: center;
-    color: #8b3e8a;
+    color: #a13590;
     margin-bottom: 10px;
   }
   .materia {
-    background: #fce4f6;
-    border: 1px solid #dba4d8;
+    background: #f5cce7;
+    border: 1px solid #ca7fbb;
     padding: 8px;
     margin: 6px 0;
     border-radius: 8px;
@@ -58,20 +58,21 @@
     text-decoration: line-through;
   }
   .materia.bloqueada {
-    background: #f8d7f0;
+    background: #f0b7dd;
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.8;
+    font-size: 13px;
+    line-height: 1.2em;
   }
   .materia .candado {
-    position: absolute;
-    right: 8px;
-    top: 8px;
-    font-size: 16px;
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
     color: #8b3e8a;
   }
   .tooltip {
     visibility: hidden;
-    background-color: #b04ba0;
+    background-color: #b0398d;
     color: #fff;
     text-align: center;
     padding: 5px;
@@ -81,7 +82,7 @@
     bottom: 120%;
     left: 50%;
     transform: translateX(-50%);
-    width: 180px;
+    width: 200px;
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 12px;
@@ -100,9 +101,9 @@
 </div>
 
 <script>
-// Materias completas con correlativas según PDF (codigos 01 a 63)
+// Materias (igual que antes, con sus correlativas completas)
 const materias = [
-  // 1er Año
+  // 1° Año
   {id:"01",nombre:"Anatomía Humana I",anio:1,correl:[]},
   {id:"02",nombre:"Histología-Citología-Embriología I",anio:1,correl:[]},
   {id:"03",nombre:"Informática Biomédica I",anio:1,correl:[]},
@@ -114,21 +115,19 @@ const materias = [
   {id:"09",nombre:"Prevención Primaria de la Salud",anio:1,correl:[]},
   {id:"10",nombre:"Comunicación Médico-Paciente",anio:1,correl:[]},
   {id:"11",nombre:"Integración y Entrenamiento I",anio:1,correl:[]},
-
-  // 2do Año
+  // 2° Año
   {id:"12",nombre:"Fisiología y Biofísica I",anio:2,correl:["06","07"]},
   {id:"13",nombre:"Bioquímica y Biología Molecular I",anio:2,correl:["06","07"]},
   {id:"14",nombre:"Principios Básicos de Salud Pública",anio:2,correl:[]},
   {id:"15",nombre:"Inglés II",anio:2,correl:["08"]},
-  {id:"16",nombre:"Destrezas Médicas: Enfermería y Habilidades Clínicas",anio:2,correl:["10"]},
+  {id:"16",nombre:"Enfermería y Habilidades Clínicas",anio:2,correl:["10"]},
   {id:"17",nombre:"Fisiología y Biofísica II",anio:2,correl:["12"]},
   {id:"18",nombre:"Bioquímica y Biología Molecular II",anio:2,correl:["13"]},
   {id:"19",nombre:"Medicina de Estilo de Vida",anio:2,correl:["14"]},
   {id:"20",nombre:"Informática Biomédica II",anio:2,correl:["03"]},
   {id:"21",nombre:"Acciones en la Comunidad",anio:2,correl:["16"]},
   {id:"22",nombre:"Integración y Entrenamiento II",anio:2,correl:["11"]},
-
-  // 3er Año
+  // 3° Año
   {id:"23",nombre:"Patología I",anio:3,correl:["17"]},
   {id:"24",nombre:"Fisiopatología I",anio:3,correl:["17"]},
   {id:"25",nombre:"Microbiología e Inmunología I",anio:3,correl:["18"]},
@@ -139,23 +138,21 @@ const materias = [
   {id:"30",nombre:"Fisiopatología II",anio:3,correl:["24"]},
   {id:"31",nombre:"Microbiología e Inmunología II",anio:3,correl:["25"]},
   {id:"32",nombre:"Farmacología II",anio:3,correl:["26"]},
-  {id:"33",nombre:"Introducción a la Investigación Biomédica",anio:3,correl:[]},
-  {id:"34",nombre:"Destrezas Médicas: Primer Nivel de Atención",anio:3,correl:["21"]},
+  {id:"33",nombre:"Investigación Biomédica",anio:3,correl:[]},
+  {id:"34",nombre:"Destrezas Médicas: Primer Nivel",anio:3,correl:["21"]},
   {id:"35",nombre:"Integración y Entrenamiento III",anio:3,correl:["22"]},
-
-  // 4to Año
+  // 4° Año
   {id:"36",nombre:"Medicina Interna I",anio:4,correl:["28","29","30","31","34"]},
   {id:"37",nombre:"Medicina Interna II",anio:4,correl:["29","30","31","32","34","36"]},
-  {id:"38",nombre:"Búsqueda e Interpretación de Bibliografía Biomédica",anio:4,correl:["33"]},
+  {id:"38",nombre:"Bibliografía Biomédica",anio:4,correl:["33"]},
   {id:"39",nombre:"Cirugía General",anio:4,correl:["27","28","29","30"]},
   {id:"40",nombre:"Trabajo, Ambiente y Salud",anio:4,correl:[]},
-  {id:"41",nombre:"Gestión en Salud y Seguridad del Paciente",anio:4,correl:[]},
-  {id:"42",nombre:"Fundamentos de Diagnóstico por Imágenes",anio:4,correl:[]},
+  {id:"41",nombre:"Gestión en Salud y Seguridad",anio:4,correl:[]},
+  {id:"42",nombre:"Diagnóstico por Imágenes",anio:4,correl:[]},
   {id:"43",nombre:"Optativa I",anio:4,correl:[]},
   {id:"44",nombre:"Integración y Entrenamiento IV",anio:4,correl:["35"]},
-
-  // 5to Año
-  {id:"45",nombre:"Diseño de Investigaciones Biomédicas",anio:5,correl:["38"]},
+  // 5° Año
+  {id:"45",nombre:"Diseño de Investigaciones",anio:5,correl:["38"]},
   {id:"46",nombre:"Enfermedades Infecciosas",anio:5,correl:["36","37"]},
   {id:"47",nombre:"Farmacología y Terapéutica",anio:5,correl:["32","36","37"]},
   {id:"48",nombre:"Salud Mental y Neurociencias II",anio:5,correl:["27","36","37"]},
@@ -170,17 +167,16 @@ const materias = [
   {id:"57",nombre:"Optativa II",anio:5,correl:[]},
   {id:"58",nombre:"Optativa III",anio:5,correl:[]},
   {id:"59",nombre:"Integración y Entrenamiento V",anio:5,correl:[]},
-
-  // 6to Año
+  // 6° Año
   {id:"60",nombre:"Pasantía Médica Comunitaria",anio:6,correl:Array.from({length:59},(_,i)=>(i+1).toString().padStart(2,"0"))},
-  {id:"61",nombre:"Internado Rotatorio Obligatorio",anio:6,correl:Array.from({length:59},(_,i)=>(i+1).toString().padStart(2,"0"))},
+  {id:"61",nombre:"Internado Rotatorio",anio:6,correl:Array.from({length:59},(_,i)=>(i+1).toString().padStart(2,"0"))},
   {id:"62",nombre:"Trabajo Final",anio:6,correl:Array.from({length:59},(_,i)=>(i+1).toString().padStart(2,"0"))},
   {id:"63",nombre:"Examen Final",anio:6,correl:Array.from({length:62},(_,i)=>(i+1).toString().padStart(2,"0"))},
 ];
 
-// Crear columnas dinámicamente
+// Crear columnas por año
 function crearColumnas() {
-  for (let anio = 1; anio <= 6; anio++) {
+  for (let anio=1; anio<=6; anio++) {
     const col = document.createElement("div");
     col.className = "anio";
     col.innerHTML = `<h2>${anio}° Año</h2>`;
@@ -191,12 +187,11 @@ function crearColumnas() {
       div.innerHTML = `${m.nombre}<span class="candado"></span><div class="tooltip"></div>`;
       col.appendChild(div);
     });
-    if (anio <= 3) document.getElementById("fila-superior").appendChild(col);
-    else document.getElementById("fila-inferior").appendChild(col);
+    (anio<=3?document.getElementById("fila-superior"):document.getElementById("fila-inferior")).appendChild(col);
   }
 }
 
-// Estado guardado
+// Progreso guardado
 function cargarProgreso() {
   return JSON.parse(localStorage.getItem("aprobadas")||"[]");
 }
@@ -204,7 +199,7 @@ function guardarProgreso(aprobadas) {
   localStorage.setItem("aprobadas",JSON.stringify(aprobadas));
 }
 
-// Actualiza bloqueos y estilos
+// Actualizar estados
 function actualizarEstado() {
   const aprobadas = cargarProgreso();
   document.querySelectorAll(".materia").forEach(div=>{
@@ -219,8 +214,9 @@ function actualizarEstado() {
     } else if (faltantes.length) {
       div.classList.add("bloqueada");
       div.classList.remove("aprobada");
-      div.querySelector(".candado").textContent = "🔒";
-      div.querySelector(".tooltip").textContent = "Falta aprobar: "+faltantes.join(", ");
+      const nombresFaltantes = faltantes.map(f=>materias.find(m=>m.id===f).nombre).join(", ");
+      div.querySelector(".candado").textContent = `🔒 Falta: ${nombresFaltantes}`;
+      div.querySelector(".tooltip").textContent = "Debes aprobar: " + nombresFaltantes;
     } else {
       div.classList.remove("aprobada","bloqueada");
       div.querySelector(".candado").textContent = "";
@@ -229,7 +225,7 @@ function actualizarEstado() {
   });
 }
 
-// Interacciones
+// Inicializar
 function inicializar() {
   crearColumnas();
   actualizarEstado();
