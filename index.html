@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Malla Curricular Medicina UAI</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f2fc; color: #4a2c4c; margin: 0; padding: 20px; }
+  h1 { text-align: center; color: #8b3a62; margin-bottom: 30px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1400px; margin: auto; }
+  .year { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+  .year h2 { text-align: center; color: #7a4d96; margin-bottom: 15px; }
+  .subject { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; padding: 8px; border-radius: 10px; background: #f4e1f4; cursor: pointer; transition: background 0.3s; position: relative; font-size: 14px; }
+  .subject.approved { background: #c27ba0; color: #fff; }
+  .subject.locked { background: #e3d0e3; cursor: not-allowed; }
+  .subject:hover { background: #dcb2d3; }
+  .tooltip { display: none; position: absolute; top: 100%; left: 0; background: #7a4d96; color: #fff; padding: 5px; border-radius: 5px; font-size: 12px; white-space: pre-line; z-index: 10; }
+  .subject:hover .tooltip { display: block; }
+  .locked::after { content: " 🔒"; margin-left: 8px; }
+</style>
+</head>
+<body>
+<h1>Malla Curricular Medicina (UAI)</h1>
+<div class="grid" id="curriculum"></div>
+
+<script>
+// === MATERIAS COMPLETAS (Códigos y correlativas según PDF) ===
+const materias = {
+  1: [
+    {id:'01',nombre:'Anatomía Humana I',correl:[]},
+    {id:'02',nombre:'Histología-Citología-Embriología I',correl:[]},
+    {id:'03',nombre:'Informática Biomédica I',correl:[]},
+    {id:'04',nombre:'Humanismo Médico y Bioética',correl:[]},
+    {id:'05',nombre:'Destrezas Médicas en Primeros Auxilios',correl:[]},
+    {id:'06',nombre:'Anatomía Humana II',correl:['01']},
+    {id:'07',nombre:'Histología-Citología-Embriología II',correl:['02']},
+    {id:'08',nombre:'Inglés I',correl:[]},
+    {id:'09',nombre:'Prevención Primaria de la Salud',correl:[]},
+    {id:'10',nombre:'Destrezas en Comunicación Médico-Paciente',correl:[]},
+    {id:'11',nombre:'Integración y Entrenamiento Profesional I',correl:[]}
+  ],
+  2: [
+    {id:'12',nombre:'Fisiología y Biofísica I',correl:['06','07']},
+    {id:'13',nombre:'Bioquímica y Biología Molecular I',correl:['06','07']},
+    {id:'14',nombre:'Principios Básicos de Salud Pública',correl:[]},
+    {id:'15',nombre:'Inglés II',correl:['08']},
+    {id:'16',nombre:'Destrezas Médicas: Cuidados y Habilidades Clínicas',correl:['10']},
+    {id:'17',nombre:'Fisiología y Biofísica II',correl:['12']},
+    {id:'18',nombre:'Bioquímica y Biología Molecular II',correl:['13']},
+    {id:'19',nombre:'Medicina de Estilo de Vida',correl:['14']},
+    {id:'20',nombre:'Informática Biomédica II',correl:['03']},
+    {id:'21',nombre:'Destrezas Médicas: Acciones en la Comunidad',correl:['16']},
+    {id:'22',nombre:'Integración y Entrenamiento Profesional II',correl:['11']}
+  ],
+  3: [
+    {id:'23',nombre:'Patología I',correl:['17']},
+    {id:'24',nombre:'Fisiopatología I',correl:['17']},
+    {id:'25',nombre:'Microbiología e Inmunología I',correl:['18']},
+    {id:'26',nombre:'Farmacología I',correl:['18']},
+    {id:'27',nombre:'Salud Mental y Neurociencias I',correl:[]},
+    {id:'28',nombre:'Destrezas Médicas: Introducción a Semiología',correl:['21']},
+    {id:'29',nombre:'Patología II',correl:['23']},
+    {id:'30',nombre:'Fisiopatología II',correl:['24']},
+    {id:'31',nombre:'Microbiología e Inmunología II',correl:['25']},
+    {id:'32',nombre:'Farmacología II',correl:['26']},
+    {id:'33',nombre:'Introducción a la Investigación Biomédica',correl:[]},
+    {id:'34',nombre:'Destrezas Médicas en Primer Nivel de Atención',correl:['21']},
+    {id:'35',nombre:'Integración y Entrenamiento Profesional III',correl:['22']}
+  ],
+  4: [
+    {id:'36',nombre:'Medicina Interna I',correl:['28','29','30','31','34']},
+    {id:'37',nombre:'Medicina Interna II',correl:['29','30','31','32','34','36']},
+    {id:'38',nombre:'Búsqueda e Interpretación Bibliografía Biomédica',correl:['33']},
+    {id:'39',nombre:'Cirugía General',correl:['27','28','29','30']},
+    {id:'40',nombre:'Trabajo, Ambiente y Salud',correl:[]},
+    {id:'41',nombre:'Gestión en Salud y Seguridad del Paciente',correl:[]},
+    {id:'42',nombre:'Fundamentos de Diagnóstico por Imágenes',correl:[]},
+    {id:'43',nombre:'Optativa I',correl:[]},
+    {id:'44',nombre:'Integración y Entrenamiento Profesional IV',correl:['35']}
+  ],
+  5: [
+    {id:'45',nombre:'Diseño de Investigaciones Biomédicas',correl:['38']},
+    {id:'46',nombre:'Enfermedades Infecciosas',correl:['36','37']},
+    {id:'47',nombre:'Farmacología y Terapéutica',correl:['32','36','37']},
+    {id:'48',nombre:'Salud Mental y Neurociencias II',correl:['27','36','37']},
+    {id:'49',nombre:'Ginecología y Obstetricia',correl:['36','37','39']},
+    {id:'50',nombre:'Pediatría',correl:['36','37']},
+    {id:'51',nombre:'Medicina Legal y Bioética',correl:['36','37']},
+    {id:'52',nombre:'Toxicología',correl:['36','37']},
+    {id:'53',nombre:'Emergentología',correl:['36','37','39']},
+    {id:'54',nombre:'Gerontología',correl:['36','37','39']},
+    {id:'55',nombre:'Rehabilitación',correl:['36','37','39']},
+    {id:'56',nombre:'Ortopedia y Traumatología',correl:['36','37','39']},
+    {id:'57',nombre:'Optativa II',correl:[]},
+    {id:'58',nombre:'Optativa III',correl:[]},
+    {id:'59',nombre:'Integración y Entrenamiento Profesional V',correl:[]}
+  ],
+  6: [
+    {id:'60',nombre:'Pasantía Médica Comunitaria',correl:['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59']},
+    {id:'61',nombre:'Internado Rotatorio Obligatorio',correl:['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59']},
+    {id:'62',nombre:'Trabajo Final',correl:['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59']},
+    {id:'63',nombre:'Examen Final',correl:['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59','60','61','62']}
+  ]
+};
+
+// === GENERAR COLUMNAS ===
+const grid = document.getElementById('curriculum');
+Object.entries(materias).forEach(([anio, lista]) => {
+  const col = document.createElement('div');
+  col.className = 'year';
+  col.innerHTML = `<h2>${anio}° Año</h2>`;
+  lista.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'subject';
+    div.dataset.id = m.id;
+    div.dataset.correl = JSON.stringify(m.correl);
+    div.textContent = m.nombre;
+    const tip = document.createElement('div');
+    tip.className = 'tooltip';
+    div.appendChild(tip);
+    col.appendChild(div);
+  });
+  grid.appendChild(col);
+});
+
+// === PROGRESO Y BLOQUEOS ===
+const aprobadas = JSON.parse(localStorage.getItem('aprobadasMed')) || [];
+function actualizarEstado(){
+  document.querySelectorAll('.subject').forEach(div=>{
+    const id=div.dataset.id;
+    const correl=JSON.parse(div.dataset.correl);
+    const tip=div.querySelector('.tooltip');
+    const faltan=correl.filter(c=>!aprobadas.includes(c));
+    div.classList.remove('approved','locked');
+    if(aprobadas.includes(id)){ div.classList.add('approved'); tip.textContent='Aprobada'; }
+    else if(faltan.length){ div.classList.add('locked'); tip.textContent='Faltan: '+faltan.join(', '); }
+    else { tip.textContent='Clic para marcar aprobada'; }
+  });
+}
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('subject')&&!e.target.classList.contains('locked')){
+    const id=e.target.dataset.id;
+    if(aprobadas.includes(id)) aprobadas.splice(aprobadas.indexOf(id),1);
+    else aprobadas.push(id);
+    localStorage.setItem('aprobadasMed',JSON.stringify(aprobadas));
+    actualizarEstado();
+  }
+});
+actualizarEstado();
+</script>
+</body>
+</html>
